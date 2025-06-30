@@ -1,0 +1,10 @@
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="48" height="48" rx="8" fill="#0d2c4e"/>
+  <path d="M12 16h24v16H12V16z" fill="#e3a518"/>
+  <rect x="14" y="18" width="20" height="2" fill="#0d2c4e"/>
+  <rect x="14" y="22" width="20" height="2" fill="#0d2c4e"/>
+  <rect x="14" y="26" width="20" height="2" fill="#0d2c4e"/>
+  <circle cx="16" cy="34" r="2" fill="#0d2c4e"/>
+  <circle cx="32" cy="34" r="2" fill="#0d2c4e"/>
+  <text x="24" y="14" text-anchor="middle" fill="#e3a518" font-size="8" font-weight="bold">NTE</text>
+</svg>

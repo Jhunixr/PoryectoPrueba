@@ -1,0 +1,30 @@
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fondo circular -->
+  <circle cx="60" cy="60" r="58" fill="#0d2c4e" stroke="#e3a518" stroke-width="4"/>
+  
+  <!-- Bus principal -->
+  <rect x="25" y="45" width="70" height="30" rx="8" fill="#e3a518"/>
+  
+  <!-- Ventanas del bus -->
+  <rect x="30" y="50" width="8" height="8" rx="2" fill="#0d2c4e"/>
+  <rect x="42" y="50" width="8" height="8" rx="2" fill="#0d2c4e"/>
+  <rect x="54" y="50" width="8" height="8" rx="2" fill="#0d2c4e"/>
+  <rect x="66" y="50" width="8" height="8" rx="2" fill="#0d2c4e"/>
+  <rect x="78" y="50" width="8" height="8" rx="2" fill="#0d2c4e"/>
+  
+  <!-- Ruedas -->
+  <circle cx="35" cy="80" r="8" fill="#0d2c4e"/>
+  <circle cx="35" cy="80" r="5" fill="#e3a518"/>
+  <circle cx="85" cy="80" r="8" fill="#0d2c4e"/>
+  <circle cx="85" cy="80" r="5" fill="#e3a518"/>
+  
+  <!-- Parrilla frontal -->
+  <rect x="88" y="52" width="6" height="16" rx="2" fill="#0d2c4e"/>
+  
+  <!-- Texto NORTE -->
+  <text x="60" y="25" text-anchor="middle" fill="#e3a518" font-family="Arial, sans-serif" font-size="12" font-weight="bold">NORTE</text>
+  
+  <!-- Líneas decorativas -->
+  <path d="M20 35 Q60 25 100 35" stroke="#e3a518" stroke-width="2" fill="none"/>
+  <path d="M20 85 Q60 95 100 85" stroke="#e3a518" stroke-width="2" fill="none"/>
+</svg>

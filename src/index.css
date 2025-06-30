@@ -1,0 +1,179 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+  }
+
+  /* Mejoras para modo oscuro */
+  .dark {
+    color-scheme: dark;
+  }
+
+  /* Scrollbar personalizado */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-100 dark:bg-gray-800;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 dark:bg-gray-600 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400 dark:bg-gray-500;
+  }
+
+  /* Transiciones suaves para modo oscuro */
+  * {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-in-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.4s ease-out;
+  }
+  
+  .animate-bounce-subtle {
+    animation: bounceSubtle 2s infinite;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .glass-effect {
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .dark .glass-effect {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-azul-oscuro to-primary-600 dark:from-amarillo-dorado dark:to-yellow-500 bg-clip-text text-transparent;
+  }
+
+  .shadow-glow {
+    box-shadow: 0 0 20px rgba(13, 44, 78, 0.3);
+  }
+
+  .dark .shadow-glow {
+    box-shadow: 0 0 20px rgba(227, 165, 24, 0.3);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes bounceSubtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Mejoras para formularios */
+input:focus, select:focus, textarea:focus {
+  @apply ring-2 ring-azul-oscuro dark:ring-amarillo-dorado ring-opacity-50;
+}
+
+/* Mejoras para botones */
+.btn-primary {
+  @apply bg-gradient-to-r from-azul-oscuro to-primary-600 dark:from-amarillo-dorado dark:to-yellow-500 text-white dark:text-azul-oscuro font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300;
+}
+
+.btn-secondary {
+  @apply bg-white dark:bg-gray-800 text-azul-oscuro dark:text-white border-2 border-azul-oscuro dark:border-amarillo-dorado font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl hover:bg-azul-oscuro hover:text-white dark:hover:bg-amarillo-dorado dark:hover:text-azul-oscuro transform hover:scale-105 transition-all duration-300;
+}
+
+/* Mejoras para cards */
+.card {
+  @apply bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
+}
+
+/* Mejoras para el modo oscuro */
+.dark body {
+  @apply bg-gray-900 text-white;
+}
+
+.dark .bg-blanco-crema {
+  @apply bg-gray-900;
+}
+
+/* Animaciones para elementos interactivos */
+.interactive-element {
+  @apply transition-all duration-300 hover:scale-105 hover:shadow-lg;
+}
+
+/* Gradientes personalizados */
+.gradient-bg {
+  background: linear-gradient(135deg, #0d2c4e 0%, #1e3a8a 50%, #e3a518 100%);
+}
+
+.dark .gradient-bg {
+  background: linear-gradient(135deg, #1f2937 0%, #374151 50%, #e3a518 100%);
+}
+
+/* Efectos de brillo */
+.glow-effect {
+  box-shadow: 0 0 30px rgba(227, 165, 24, 0.4);
+}
+
+.dark .glow-effect {
+  box-shadow: 0 0 30px rgba(227, 165, 24, 0.6);
+}
