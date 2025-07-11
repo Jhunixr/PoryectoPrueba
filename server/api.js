@@ -312,17 +312,13 @@ app.get('/api/dashboard/estadisticas', verificarToken, async (req, res) => {
       WHERE DATE(fecha_hora_salida) = ? AND estado = 'Programado'
     `, [hoy]);
     
-    // Rutas más populares
-    const rutasPopulares = await db.obtenerRutasPopulares(5);
-    
     res.json({
       ventas_hoy: {
         pasajeros: ventasHoy[0].total_pasajes,
         ingresos: ventasHoy[0].total_ingresos
       },
       buses_operativos: busesOperativos[0].total,
-      viajes_programados: viajesHoy[0].total,
-      rutas_populares: rutasPopulares
+      viajes_programados: viajesHoy[0].total
     });
     
   } catch (error) {
@@ -351,6 +347,114 @@ app.get('/api/admin/buses', verificarToken, async (req, res) => {
   } catch (error) {
     console.error('Error al obtener buses:', error);
     res.status(500).json({ error: 'Error al obtener buses' });
+  }
+});
+
+// Obtener choferes
+app.get('/api/admin/choferes', verificarToken, async (req, res) => {
+  try {
+    const [choferes] = await db.pool.execute(`
+      SELECT 
+        ch.codigo,
+        ch.licencia,
+        CONCAT(p.nombre, ' ', p.apellidos) as nombre,
+        p.nombre,
+        p.apellidos
+      FROM CHOFER ch
+      INNER JOIN EMPLEADO e ON ch.codigo = e.codigo
+      INNER JOIN PERSONA p ON e.codigo = p.codigo
+      ORDER BY p.apellidos, p.nombre
+    `);
+    res.json(choferes);
+  } catch (error) {
+    console.error('Error al obtener choferes:', error);
+    res.status(500).json({ error: 'Error al obtener choferes' });
+  }
+});
+
+// Crear nuevo viaje
+app.post('/api/admin/viajes', verificarToken, async (req, res) => {
+  try {
+    const { ruta_codigo, bus_codigo, chofer_codigo, fecha_hora_salida, fecha_hora_llegada_estimada } = req.body;
+    
+    console.log('Datos del viaje a crear:', {
+      ruta_codigo, bus_codigo, chofer_codigo, fecha_hora_salida, fecha_hora_llegada_estimada
+    });
+    
+    // Verificar que el bus esté disponible en esa fecha/hora
+    const [busOcupado] = await db.pool.execute(`
+      SELECT codigo FROM VIAJE 
+      WHERE bus_codigo = ? 
+        AND estado = 'Programado'
+        AND (
+          (fecha_hora_salida <= ? AND fecha_hora_llegada_estimada >= ?) OR
+          (fecha_hora_salida <= ? AND fecha_hora_llegada_estimada >= ?)
+        )
+    `, [bus_codigo, fecha_hora_salida, fecha_hora_salida, fecha_hora_llegada_estimada, fecha_hora_llegada_estimada]);
+    
+    if (busOcupado.length > 0) {
+      return res.status(400).json({ error: 'El bus ya tiene un viaje programado en ese horario' });
+    }
+    
+    // Verificar que el chofer esté disponible
+    const [choferOcupado] = await db.pool.execute(`
+      SELECT codigo FROM VIAJE 
+      WHERE chofer_codigo = ? 
+        AND estado = 'Programado'
+        AND (
+          (fecha_hora_salida <= ? AND fecha_hora_llegada_estimada >= ?) OR
+          (fecha_hora_salida <= ? AND fecha_hora_llegada_estimada >= ?)
+        )
+    `, [chofer_codigo, fecha_hora_salida, fecha_hora_salida, fecha_hora_llegada_estimada, fecha_hora_llegada_estimada]);
+    
+    if (choferOcupado.length > 0) {
+      return res.status(400).json({ error: 'El chofer ya tiene un viaje programado en ese horario' });
+    }
+    
+    // Crear el viaje
+    const [result] = await db.pool.execute(`
+      INSERT INTO VIAJE (ruta_codigo, bus_codigo, chofer_codigo, fecha_hora_salida, fecha_hora_llegada_estimada, estado) 
+      VALUES (?, ?, ?, ?, ?, 'Programado')
+    `, [ruta_codigo, bus_codigo, chofer_codigo, fecha_hora_salida, fecha_hora_llegada_estimada]);
+    
+    console.log('Viaje creado con ID:', result.insertId);
+    
+    res.json({
+      message: 'Viaje programado exitosamente',
+      viaje_id: result.insertId
+    });
+    
+  } catch (error) {
+    console.error('Error al crear viaje:', error);
+    res.status(500).json({ error: 'Error al programar viaje' });
+  }
+});
+
+// Obtener reservas recientes
+app.get('/api/admin/pasajes/recientes', verificarToken, async (req, res) => {
+  try {
+    const [pasajes] = await db.pool.execute(`
+      SELECT 
+        p.codigo,
+        CONCAT(pe.nombre, ' ', pe.apellidos) as passenger,
+        CONCAT(r.origen, ' - ', r.destino) as route,
+        TIME_FORMAT(v.fecha_hora_salida, '%H:%i') as departure,
+        CONCAT('S/ ', FORMAT(p.importe_pagar, 2)) as amount,
+        p.estado as status
+      FROM PASAJE p
+      INNER JOIN VIAJE v ON p.viaje_codigo = v.codigo
+      INNER JOIN RUTAS r ON v.ruta_codigo = r.codigo
+      INNER JOIN CLIENTE c ON p.cliente_codigo = c.codigo
+      INNER JOIN PERSONA pe ON c.codigo = pe.codigo
+      WHERE p.estado = 'Vendido'
+      ORDER BY p.fecha_emision DESC
+      LIMIT 10
+    `);
+    
+    res.json(pasajes);
+  } catch (error) {
+    console.error('Error al obtener reservas recientes:', error);
+    res.status(500).json({ error: 'Error al obtener reservas recientes' });
   }
 });
 

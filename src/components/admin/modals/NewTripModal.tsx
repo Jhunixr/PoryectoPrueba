@@ -8,53 +8,106 @@ interface NewTripModalProps {
 
 export function NewTripModal({ isOpen, onClose }: NewTripModalProps) {
   const [formData, setFormData] = useState({
-    ruta: '',
-    bus: '',
-    chofer: '',
+    ruta_codigo: '',
+    bus_codigo: '',
+    chofer_codigo: '',
     fecha: '',
     hora_salida: '',
     hora_llegada: ''
   });
 
   const [loading, setLoading] = useState(false);
+  const [rutas, setRutas] = useState([]);
+  const [buses, setBuses] = useState([]);
+  const [choferes, setChoferes] = useState([]);
 
-  const rutas = [
-    { id: 1, nombre: 'Lima - Trujillo' },
-    { id: 2, nombre: 'Lima - Chiclayo' },
-    { id: 3, nombre: 'Lima - Piura' },
-    { id: 4, nombre: 'Lima - Cajamarca' }
-  ];
+  useEffect(() => {
+    if (isOpen) {
+      cargarDatos();
+    }
+  }, [isOpen]);
 
-  const buses = [
-    { id: 1, placa: 'NTE-001', fabricante: 'Mercedes Benz' },
-    { id: 2, placa: 'NTE-002', fabricante: 'Scania' },
-    { id: 3, placa: 'NTE-003', fabricante: 'Volvo' }
-  ];
+  const cargarDatos = async () => {
+    try {
+      const token = localStorage.getItem('norteexpreso_token');
+      
+      // Cargar rutas
+      const rutasResponse = await fetch('http://localhost:3001/api/rutas');
+      if (rutasResponse.ok) {
+        const rutasData = await rutasResponse.json();
+        setRutas(rutasData);
+      }
+      
+      // Cargar buses
+      const busesResponse = await fetch('http://localhost:3001/api/admin/buses', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (busesResponse.ok) {
+        const busesData = await busesResponse.json();
+        setBuses(busesData.filter(bus => bus.estado === 'Operativo'));
+      }
+      
+      // Cargar choferes
+      const choferesResponse = await fetch('http://localhost:3001/api/admin/choferes', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (choferesResponse.ok) {
+        const choferesData = await choferesResponse.json();
+        setChoferes(choferesData);
+      }
+    } catch (error) {
+      console.error('Error al cargar datos:', error);
+    }
+  };
 
-  const choferes = [
-    { id: 1, nombre: 'Carlos Mendoza' },
-    { id: 2, nombre: 'Luis García' },
-    { id: 3, nombre: 'Miguel Torres' }
-  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // Simulación de guardado
-    setTimeout(() => {
-      setLoading(false);
-      alert('Viaje programado exitosamente');
-      onClose();
-      setFormData({
-        ruta: '',
-        bus: '',
-        chofer: '',
-        fecha: '',
-        hora_salida: '',
-        hora_llegada: ''
+    try {
+      const token = localStorage.getItem('norteexpreso_token');
+      
+      const viajeData = {
+        ruta_codigo: parseInt(formData.ruta_codigo),
+        bus_codigo: parseInt(formData.bus_codigo),
+        chofer_codigo: parseInt(formData.chofer_codigo),
+        fecha_hora_salida: `${formData.fecha} ${formData.hora_salida}:00`,
+        fecha_hora_llegada_estimada: `${formData.fecha} ${formData.hora_llegada}:00`
+      };
+      
+      const response = await fetch('http://localhost:3001/api/admin/viajes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(viajeData)
       });
-    }, 1000);
+      
+      if (response.ok) {
+        alert('Viaje programado exitosamente');
+        onClose();
+        setFormData({
+          ruta_codigo: '',
+          bus_codigo: '',
+          chofer_codigo: '',
+          fecha: '',
+          hora_salida: '',
+          hora_llegada: ''
+        });
+        // Recargar la página para mostrar el nuevo viaje
+        window.location.reload();
+      } else {
+        const error = await response.json();
+        alert(`Error: ${error.error}`);
+      }
+    } catch (error) {
+      console.error('Error al programar viaje:', error);
+      alert('Error al programar viaje');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -84,14 +137,16 @@ export function NewTripModal({ isOpen, onClose }: NewTripModalProps) {
                   Ruta
                 </label>
                 <select
-                  value={formData.ruta}
-                  onChange={(e) => setFormData(prev => ({ ...prev, ruta: e.target.value }))}
+                  value={formData.ruta_codigo}
+                  onChange={(e) => setFormData(prev => ({ ...prev, ruta_codigo: e.target.value }))}
                   className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-azul-oscuro focus:border-azul-oscuro dark:bg-gray-700 dark:text-white"
                   required
                 >
                   <option value="">Seleccionar ruta</option>
                   {rutas.map(ruta => (
-                    <option key={ruta.id} value={ruta.id}>{ruta.nombre}</option>
+                    <option key={ruta.codigo} value={ruta.codigo}>
+                      {ruta.origen} - {ruta.destino} (S/ {ruta.costo_referencial})
+                    </option>
                   ))}
                 </select>
               </div>
@@ -102,15 +157,15 @@ export function NewTripModal({ isOpen, onClose }: NewTripModalProps) {
                   Bus
                 </label>
                 <select
-                  value={formData.bus}
-                  onChange={(e) => setFormData(prev => ({ ...prev, bus: e.target.value }))}
+                  value={formData.bus_codigo}
+                  onChange={(e) => setFormData(prev => ({ ...prev, bus_codigo: e.target.value }))}
                   className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-azul-oscuro focus:border-azul-oscuro dark:bg-gray-700 dark:text-white"
                   required
                 >
                   <option value="">Seleccionar bus</option>
                   {buses.map(bus => (
-                    <option key={bus.id} value={bus.id}>
-                      {bus.placa} - {bus.fabricante}
+                    <option key={bus.codigo} value={bus.codigo}>
+                      {bus.placa} - {bus.fabricante} ({bus.num_asientos} asientos)
                     </option>
                   ))}
                 </select>
@@ -122,14 +177,16 @@ export function NewTripModal({ isOpen, onClose }: NewTripModalProps) {
                   Chofer
                 </label>
                 <select
-                  value={formData.chofer}
-                  onChange={(e) => setFormData(prev => ({ ...prev, chofer: e.target.value }))}
+                  value={formData.chofer_codigo}
+                  onChange={(e) => setFormData(prev => ({ ...prev, chofer_codigo: e.target.value }))}
                   className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-azul-oscuro focus:border-azul-oscuro dark:bg-gray-700 dark:text-white"
                   required
                 >
                   <option value="">Seleccionar chofer</option>
                   {choferes.map(chofer => (
-                    <option key={chofer.id} value={chofer.id}>{chofer.nombre}</option>
+                    <option key={chofer.codigo} value={chofer.codigo}>
+                      {chofer.nombre} {chofer.apellidos} - {chofer.licencia}
+                    </option>
                   ))}
                 </select>
               </div>

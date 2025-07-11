@@ -358,9 +358,11 @@ export function BookingPage() {
                           {seat.isOccupied ? (
                             seat.occupiedBy?.gender === 'M' ? '♂' : '♀'
                           ) : (
-                            // Mostrar el género del pasajero asignado a este asiento
-                            selectedSeatsGender[seat.number] ? 
-                              seat.number
+                            // Mostrar el género del pasajero asignado a este asiento o el número
+                            selectedSeatsGender[seat.number] === 'M' ? '♂' :
+                            selectedSeatsGender[seat.number] === 'F' ? '♀' :
+                            seat.number
+                          ) : (
                             seat.number
                           )}
                           

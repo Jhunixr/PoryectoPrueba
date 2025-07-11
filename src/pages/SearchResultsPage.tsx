@@ -21,151 +21,104 @@ export function SearchResultsPage() {
       return;
     }
 
-    // Simulación de búsqueda con datos del norte del Perú
+    // Buscar viajes reales desde la base de datos
     setTimeout(() => {
-      const routeData = getRouteByOriginDestination(filters.origen, filters.destino);
-      
-      if (!routeData) {
-        setViajes([]);
-        setLoading(false);
-        return;
-      }
+      buscarViajesReales();
+    }, 1000);
+  }, [filters, navigate, selectedPromotion]);
 
-      const mockViajes: Viaje[] = [
-        {
-          codigo: 1,
-          fecha_hora_salida: `${filters.fecha}T06:00:00.000Z`,
-          fecha_hora_llegada_estimada: `${filters.fecha}T${String(6 + routeData.duracion_horas).padStart(2, '0')}:00:00.000Z`,
-          estado: 'Programado',
+  const buscarViajesReales = async () => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/viajes/buscar?origen=${filters.origen}&destino=${filters.destino}&fecha=${filters.fecha}`);
+      
+      if (response.ok) {
+        const viajesData = await response.json();
+        console.log('Viajes encontrados:', viajesData);
+        
+        // Transformar datos de la BD al formato esperado
+        const viajesTransformados = viajesData.map((viaje: any) => ({
+          codigo: viaje.codigo,
+          fecha_hora_salida: viaje.fecha_hora_salida,
+          fecha_hora_llegada_estimada: viaje.fecha_hora_llegada_estimada,
+          estado: viaje.estado,
           ruta: {
-            codigo: routeData.codigo,
-            origen: filters.origen,
-            destino: filters.destino,
-            costo_referencial: selectedPromotion ? selectedPromotion.discountedPrice : routeData.costo_referencial
+            codigo: viaje.ruta_codigo || 1,
+            origen: viaje.origen,
+            destino: viaje.destino,
+            costo_referencial: selectedPromotion ? selectedPromotion.discountedPrice : viaje.costo_referencial
           },
           bus: {
-            codigo: 1,
-            placa: 'NTE-001',
-            fabricante: 'Mercedes Benz',
-            num_asientos: 40,
+            codigo: viaje.bus_codigo || 1,
+            placa: viaje.placa,
+            fabricante: viaje.fabricante,
+            num_asientos: viaje.num_asientos,
             estado: 'Operativo'
           },
           chofer: {
-            codigo: 1,
-            nombre: 'Carlos',
-            apellidos: 'Mendoza',
+            codigo: viaje.chofer_codigo || 1,
+            nombre: viaje.chofer_nombre?.split(' ')[0] || 'Chofer',
+            apellidos: viaje.chofer_nombre?.split(' ').slice(1).join(' ') || 'Asignado',
             dni: '12345678',
             direccion: 'Lima',
             telefono: '999999999',
-            email: 'carlos@norteexpreso.com',
+            email: 'chofer@norteexpreso.com',
             cargo: 'Chofer',
             area: 'Operaciones'
           },
-          asientos_disponibles: 35
-        },
-        {
-          codigo: 2,
-          fecha_hora_salida: `${filters.fecha}T10:00:00.000Z`,
-          fecha_hora_llegada_estimada: `${filters.fecha}T${String(10 + routeData.duracion_horas).padStart(2, '0')}:00:00.000Z`,
-          estado: 'Programado',
-          ruta: {
-            codigo: routeData.codigo,
-            origen: filters.origen,
-            destino: filters.destino,
-            costo_referencial: selectedPromotion ? selectedPromotion.discountedPrice : routeData.costo_referencial + 5
-          },
-          bus: {
-            codigo: 2,
-            placa: 'NTE-002',
-            fabricante: 'Scania',
-            num_asientos: 44,
-            estado: 'Operativo'
-          },
-          chofer: {
-            codigo: 2,
-            nombre: 'Miguel',
-            apellidos: 'Torres',
-            dni: '87654321',
-            direccion: 'Lima',
-            telefono: '888888888',
-            email: 'miguel@norteexpreso.com',
-            cargo: 'Chofer',
-            area: 'Operaciones'
-          },
-          asientos_disponibles: 28
-        },
-        {
-          codigo: 3,
-          fecha_hora_salida: `${filters.fecha}T15:00:00.000Z`,
-          fecha_hora_llegada_estimada: `${filters.fecha}T${String(15 + routeData.duracion_horas).padStart(2, '0')}:00:00.000Z`,
-          estado: 'Programado',
-          ruta: {
-            codigo: routeData.codigo,
-            origen: filters.origen,
-            destino: filters.destino,
-            costo_referencial: selectedPromotion ? selectedPromotion.discountedPrice : routeData.costo_referencial - 3
-          },
-          bus: {
-            codigo: 3,
-            placa: 'NTE-003',
-            fabricante: 'Volvo',
-            num_asientos: 36,
-            estado: 'Operativo'
-          },
-          chofer: {
-            codigo: 3,
-            nombre: 'Luis',
-            apellidos: 'García',
-            dni: '11223344',
-            direccion: 'Lima',
-            telefono: '777777777',
-            email: 'luis@norteexpreso.com',
-            cargo: 'Chofer',
-            area: 'Operaciones'
-          },
-          asientos_disponibles: 22
-        },
-        {
-          codigo: 4,
-          fecha_hora_salida: `${filters.fecha}T20:00:00.000Z`,
-          fecha_hora_llegada_estimada: (() => {
-            const llegadaHora = 20 + routeData.duracion_horas;
-            const fechaLlegada = llegadaHora >= 24 ? new Date(new Date(filters.fecha).getTime() + 24*60*60*1000).toISOString().split('T')[0] : filters.fecha;
-            return `${fechaLlegada}T${String(llegadaHora >= 24 ? llegadaHora - 24 : llegadaHora).padStart(2, '0')}:00:00.000Z`;
-          })(),
-          estado: 'Programado',
-          ruta: {
-            codigo: routeData.codigo,
-            origen: filters.origen,
-            destino: filters.destino,
-            costo_referencial: selectedPromotion ? selectedPromotion.discountedPrice : routeData.costo_referencial + 2
-          },
-          bus: {
-            codigo: 4,
-            placa: 'NTE-004',
-            fabricante: 'Mercedes Benz',
-            num_asientos: 42,
-            estado: 'Operativo'
-          },
-          chofer: {
-            codigo: 4,
-            nombre: 'Roberto',
-            apellidos: 'Silva',
-            dni: '55667788',
-            direccion: 'Lima',
-            telefono: '666666666',
-            email: 'roberto@norteexpreso.com',
-            cargo: 'Chofer',
-            area: 'Operaciones'
-          },
-          asientos_disponibles: 18
-        }
-      ];
-      
-      setViajes(mockViajes);
+          asientos_disponibles: viaje.asientos_disponibles || viaje.num_asientos
+        }));
+        
+        setViajes(viajesTransformados);
+      } else {
+        console.error('Error al buscar viajes:', response.statusText);
+        setViajes([]);
+      }
+    } catch (error) {
+      console.error('Error de conexión al buscar viajes:', error);
+      // Fallback con datos simulados si no hay conexión
+      const routeData = getRouteByOriginDestination(filters.origen, filters.destino);
+      if (routeData) {
+        const mockViajes: Viaje[] = [
+          {
+            codigo: 1,
+            fecha_hora_salida: `${filters.fecha}T06:00:00`,
+            fecha_hora_llegada_estimada: `${filters.fecha}T${String(6 + routeData.duracion_horas).padStart(2, '0')}:00:00`,
+            estado: 'Programado',
+            ruta: {
+              codigo: routeData.codigo,
+              origen: filters.origen,
+              destino: filters.destino,
+              costo_referencial: selectedPromotion ? selectedPromotion.discountedPrice : routeData.costo_referencial
+            },
+            bus: {
+              codigo: 1,
+              placa: 'NTE-001',
+              fabricante: 'Mercedes Benz',
+              num_asientos: 40,
+              estado: 'Operativo'
+            },
+            chofer: {
+              codigo: 1,
+              nombre: 'Carlos',
+              apellidos: 'Mendoza',
+              dni: '12345678',
+              direccion: 'Lima',
+              telefono: '999999999',
+              email: 'carlos@norteexpreso.com',
+              cargo: 'Chofer',
+              area: 'Operaciones'
+            },
+            asientos_disponibles: 35
+          }
+        ];
+        setViajes(mockViajes);
+      } else {
+        setViajes([]);
+      }
+    } finally {
       setLoading(false);
-    }, 1000);
-  }, [filters, navigate, selectedPromotion]);
+    }
+  };
 
   const handleSelectViaje = (viaje: Viaje) => {
     navigate('/booking', { state: { viaje, filters, selectedPromotion } });

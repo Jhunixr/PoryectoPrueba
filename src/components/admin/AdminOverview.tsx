@@ -12,68 +12,98 @@ import { NewRouteModal } from './modals/NewRouteModal';
 export function AdminOverview() {
   const { theme } = useTheme();
   const { t } = useLanguage();
+  const [stats, setStats] = useState({
+    ventas_dia: 'S/ 0',
+    pasajeros_hoy: '0',
+    buses_operativos: '0',
+    viajes_programados: '0'
+  });
+  const [recentBookings, setRecentBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showNewTripModal, setShowNewTripModal] = useState(false);
   const [showNewBusModal, setShowNewBusModal] = useState(false);
   const [showNewEmployeeModal, setShowNewEmployeeModal] = useState(false);
   const [showNewRouteModal, setShowNewRouteModal] = useState(false);
 
-  const stats = [
+  useEffect(() => {
+    cargarEstadisticas();
+    cargarReservasRecientes();
+  }, []);
+
+  const cargarEstadisticas = async () => {
+    try {
+      const token = localStorage.getItem('norteexpreso_token');
+      const response = await fetch('http://localhost:3001/api/dashboard/estadisticas', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setStats({
+          ventas_dia: `S/ ${data.ventas_hoy.ingresos.toFixed(2)}`,
+          pasajeros_hoy: data.ventas_hoy.pasajeros.toString(),
+          buses_operativos: data.buses_operativos.toString(),
+          viajes_programados: data.viajes_programados.toString()
+        });
+      }
+    } catch (error) {
+      console.error('Error al cargar estadísticas:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const cargarReservasRecientes = async () => {
+    try {
+      const token = localStorage.getItem('norteexpreso_token');
+      const response = await fetch('http://localhost:3001/api/admin/pasajes/recientes', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setRecentBookings(data);
+      }
+    } catch (error) {
+      console.error('Error al cargar reservas recientes:', error);
+    }
+  };
+
+  const statsData = [
     {
       name: 'Ventas del día',
-      value: 'S/ 12,450',
+      value: stats.ventas_dia,
       change: '+12%',
       changeType: 'increase',
       icon: CreditCard,
     },
     {
       name: 'Pasajeros hoy',
-      value: '234',
+      value: stats.pasajeros_hoy,
       change: '+5%',
       changeType: 'increase',
       icon: Users,
     },
     {
       name: 'Buses operativos',
-      value: '45',
+      value: stats.buses_operativos,
       change: '-2',
       changeType: 'decrease',
       icon: Bus,
     },
     {
       name: 'Viajes programados',
-      value: '28',
+      value: stats.viajes_programados,
       change: '+3',
       changeType: 'increase',
       icon: Calendar,
     },
   ];
 
-  const recentBookings = [
-    {
-      id: 'P001',
-      passenger: 'María González',
-      route: 'Lima - Arequipa',
-      departure: '08:00',
-      amount: 'S/ 45.00',
-      status: 'Confirmado'
-    },
-    {
-      id: 'P002',
-      passenger: 'Carlos Mendoza',
-      route: 'Lima - Trujillo',
-      departure: '14:30',
-      amount: 'S/ 35.00',
-      status: 'Confirmado'
-    },
-    {
-      id: 'P003',
-      passenger: 'Ana Rodríguez',
-      route: 'Lima - Cusco',
-      departure: '20:00',
-      amount: 'S/ 65.00',
-      status: 'Pendiente'
-    },
-  ];
 
   const alerts = [
     {
@@ -137,7 +167,7 @@ export function AdminOverview() {
 
       {/* Stats */}
       <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((item) => (
+        {statsData.map((item) => (
           <div key={item.name} className="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
             <div className="p-6">
               <div className="flex items-center">
