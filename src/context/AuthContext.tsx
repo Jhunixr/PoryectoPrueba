@@ -39,32 +39,82 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (usuario: string, password: string, type: 'admin' | 'customer' = 'admin'): Promise<boolean> => {
     try {
+      console.log('Intentando login:', { usuario, type });
+      
       if (type === 'admin') {
-        // Login de administrador
-        const mockUser: Usuario = {
-          codigo: 1,
-          usuario: usuario,
-          estado: 'activo',
-          personal: {
-            codigo: 1,
-            nombre: 'Admin',
-            apellidos: 'Sistema',
-            dni: '12345678',
-            direccion: 'Lima, Perú',
-            telefono: '999999999',
-            email: 'admin@norteexpreso.com',
-            cargo: 'Administrador',
-            area: 'Sistemas'
-          },
-          tipo_usuario: 'Administrador'
-        };
+        // Login de administrador - conectar con API
+        try {
+          const response = await fetch('http://localhost:3001/api/auth/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ usuario, password }),
+          });
 
-        if (usuario === 'admin' && password === 'admin123') {
-          setUser(mockUser);
-          setUserType('admin');
-          localStorage.setItem('norteexpreso_user', JSON.stringify(mockUser));
-          localStorage.setItem('norteexpreso_user_type', 'admin');
-          return true;
+          if (response.ok) {
+            const data = await response.json();
+            console.log('Login exitoso:', data);
+            
+            const adminUser: Usuario = {
+              codigo: data.usuario.codigo,
+              usuario: data.usuario.usuario,
+              estado: 'activo',
+              personal: {
+                codigo: data.usuario.codigo,
+                nombre: data.usuario.nombre_completo.split(' ')[0],
+                apellidos: data.usuario.nombre_completo.split(' ').slice(1).join(' '),
+                dni: '12345678',
+                direccion: 'Lima, Perú',
+                telefono: '999999999',
+                email: data.usuario.email,
+                cargo: data.usuario.tipo_usuario,
+                area: 'Sistemas'
+              },
+              tipo_usuario: data.usuario.tipo_usuario
+            };
+
+            setUser(adminUser);
+            setUserType('admin');
+            localStorage.setItem('norteexpreso_user', JSON.stringify(adminUser));
+            localStorage.setItem('norteexpreso_user_type', 'admin');
+            localStorage.setItem('norteexpreso_token', data.token);
+            return true;
+          } else {
+            const error = await response.json();
+            console.error('Error de login:', error);
+            return false;
+          }
+        } catch (error) {
+          console.error('Error de conexión:', error);
+          
+          // Fallback para demo si no hay conexión
+          if (usuario === 'admin' && password === 'admin123') {
+            const mockUser: Usuario = {
+              codigo: 1,
+              usuario: usuario,
+              estado: 'activo',
+              personal: {
+                codigo: 1,
+                nombre: 'Admin',
+                apellidos: 'Sistema',
+                dni: '12345678',
+                direccion: 'Lima, Perú',
+                telefono: '999999999',
+                email: 'admin@norteexpreso.com',
+                cargo: 'Administrador',
+                area: 'Sistemas'
+              },
+              tipo_usuario: 'Administrador'
+            };
+
+            setUser(mockUser);
+            setUserType('admin');
+            localStorage.setItem('norteexpreso_user', JSON.stringify(mockUser));
+            localStorage.setItem('norteexpreso_user_type', 'admin');
+            return true;
+          }
+          return false;
         }
       } else {
         // Login de cliente
@@ -102,6 +152,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('norteexpreso_user');
     localStorage.removeItem('norteexpreso_customer');
     localStorage.removeItem('norteexpreso_user_type');
+    localStorage.removeItem('norteexpreso_token');
   };
 
   return (

@@ -69,6 +69,9 @@ export function BookingPage() {
     31: { gender: 'M', name: 'Miguel A.' }
   };
 
+  // Estado para rastrear los géneros de los asientos seleccionados
+  const [selectedSeatsGender, setSelectedSeatsGender] = useState<{[key: number]: 'M' | 'F'}>({});
+
   // Políticas de mascotas
   const politicaMascota = {
     peso_maximo: 8, // kg
@@ -102,6 +105,10 @@ export function BookingPage() {
 
     if (selectedSeats.includes(seatNumber)) {
       setSelectedSeats(selectedSeats.filter(s => s !== seatNumber));
+      // Remover el género del asiento deseleccionado
+      const newGenders = { ...selectedSeatsGender };
+      delete newGenders[seatNumber];
+      setSelectedSeatsGender(newGenders);
     } else if (selectedSeats.length < filters.pasajeros) {
       setSelectedSeats([...selectedSeats, seatNumber]);
     }
@@ -131,6 +138,13 @@ export function BookingPage() {
     if (field === 'edad') {
       const edad = value as number;
       newData[index].esmenor = edad < 18;
+    }
+    
+    // Actualizar el género del asiento cuando se cambia el género del pasajero
+    if (field === 'genero' && selectedSeats[index]) {
+      const newGenders = { ...selectedSeatsGender };
+      newGenders[selectedSeats[index]] = value as 'M' | 'F';
+      setSelectedSeatsGender(newGenders);
     }
     
     setPassengerData(newData);
@@ -344,6 +358,9 @@ export function BookingPage() {
                           {seat.isOccupied ? (
                             seat.occupiedBy?.gender === 'M' ? '♂' : '♀'
                           ) : (
+                            // Mostrar el género del pasajero asignado a este asiento
+                            selectedSeatsGender[seat.number] ? 
+                              seat.number
                             seat.number
                           )}
                           

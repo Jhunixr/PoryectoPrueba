@@ -39,6 +39,8 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const { usuario, password } = req.body;
     
+    console.log('Intento de login:', { usuario, password: '***' });
+    
     // Buscar usuario en la base de datos
     const [usuarios] = await db.pool.execute(`
       SELECT 
@@ -57,14 +59,19 @@ app.post('/api/auth/login', async (req, res) => {
       WHERE u.usuario = ? AND u.estado = 'activo'
     `, [usuario]);
     
+    console.log('Usuarios encontrados:', usuarios.length);
+    
     if (usuarios.length === 0) {
       return res.status(401).json({ error: 'Usuario no encontrado' });
     }
     
     const usuarioData = usuarios[0];
+    console.log('Usuario encontrado:', usuarioData.usuario);
     
     // Verificar contraseña
     const passwordValida = await bcrypt.compare(password, usuarioData.clave);
+    console.log('Password válida:', passwordValida);
+    
     if (!passwordValida) {
       return res.status(401).json({ error: 'Contraseña incorrecta' });
     }
@@ -79,6 +86,8 @@ app.post('/api/auth/login', async (req, res) => {
       JWT_SECRET,
       { expiresIn: '8h' }
     );
+    
+    console.log('Login exitoso para:', usuarioData.usuario);
     
     res.json({
       token,
@@ -185,6 +194,14 @@ app.post('/api/pasajes', verificarToken, async (req, res) => {
     const { viaje_codigo, cliente, asientos, metodo_pago } = req.body;
     const usuario_vendedor = req.usuario.codigo;
     
+    console.log('Datos recibidos para venta de pasaje:', {
+      viaje_codigo,
+      cliente,
+      asientos,
+      metodo_pago,
+      usuario_vendedor
+    });
+    
     // Registrar cliente si no existe
     let clienteCodigo;
     const [clienteExistente] = await db.pool.execute(`
@@ -193,12 +210,25 @@ app.post('/api/pasajes', verificarToken, async (req, res) => {
     
     if (clienteExistente.length > 0) {
       clienteCodigo = clienteExistente[0].codigo;
+      console.log('Cliente existente encontrado:', clienteCodigo);
     } else {
-      clienteCodigo = await db.registrarCliente(
-        cliente.nombre,
-        cliente.apellidos,
-        cliente.dni
-      );
+      console.log('Registrando nuevo cliente...');
+      
+      // Insertar persona
+      const [personaResult] = await db.pool.execute(`
+        INSERT INTO PERSONA (nombre, apellidos, dni) 
+        VALUES (?, ?, ?)
+      `, [cliente.nombre, cliente.apellidos, cliente.dni]);
+      
+      clienteCodigo = personaResult.insertId;
+      
+      // Insertar cliente
+      await db.pool.execute(`
+        INSERT INTO CLIENTE (codigo, razon_social, ruc) 
+        VALUES (?, NULL, NULL)
+      `, [clienteCodigo]);
+      
+      console.log('Nuevo cliente registrado:', clienteCodigo);
     }
     
     // Obtener información del viaje
@@ -216,17 +246,34 @@ app.post('/api/pasajes', verificarToken, async (req, res) => {
     const costoUnitario = viajeInfo[0].costo_referencial;
     const pasajesCreados = [];
     
+    console.log('Costo unitario:', costoUnitario);
+    
     // Crear pasajes para cada asiento
     for (const asiento of asientos) {
-      const pasajeCodigo = await db.venderPasaje(
-        viaje_codigo,
-        clienteCodigo,
-        asiento,
-        costoUnitario,
-        usuario_vendedor
-      );
+      console.log('Creando pasaje para asiento:', asiento);
+      
+      // Verificar disponibilidad del asiento
+      const [asientoOcupado] = await db.pool.execute(`
+        SELECT codigo FROM PASAJE 
+        WHERE viaje_codigo = ? AND asiento = ? AND estado = 'Vendido'
+      `, [viaje_codigo, asiento]);
+      
+      if (asientoOcupado.length > 0) {
+        throw new Error(`El asiento ${asiento} ya está ocupado`);
+      }
+      
+      // Insertar el pasaje
+      const [result] = await db.pool.execute(`
+        INSERT INTO PASAJE (viaje_codigo, cliente_codigo, asiento, importe_pagar, usuario_vendedor_codigo, estado) 
+        VALUES (?, ?, ?, ?, ?, 'Vendido')
+      `, [viaje_codigo, clienteCodigo, asiento, costoUnitario, usuario_vendedor]);
+      
+      const pasajeCodigo = result.insertId;
       pasajesCreados.push(pasajeCodigo);
+      console.log('Pasaje creado:', pasajeCodigo);
     }
+    
+    console.log('Venta completada exitosamente');
     
     res.json({
       message: 'Pasajes vendidos exitosamente',

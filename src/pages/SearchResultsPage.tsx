@@ -34,8 +34,8 @@ export function SearchResultsPage() {
       const mockViajes: Viaje[] = [
         {
           codigo: 1,
-          fecha_hora_salida: `${filters.fecha}T06:00:00`,
-          fecha_hora_llegada_estimada: `${filters.fecha}T${String(6 + routeData.duracion_horas).padStart(2, '0')}:00:00`,
+          fecha_hora_salida: `${filters.fecha}T06:00:00.000Z`,
+          fecha_hora_llegada_estimada: `${filters.fecha}T${String(6 + routeData.duracion_horas).padStart(2, '0')}:00:00.000Z`,
           estado: 'Programado',
           ruta: {
             codigo: routeData.codigo,
@@ -65,8 +65,8 @@ export function SearchResultsPage() {
         },
         {
           codigo: 2,
-          fecha_hora_salida: `${filters.fecha}T10:00:00`,
-          fecha_hora_llegada_estimada: `${filters.fecha}T${String(10 + routeData.duracion_horas).padStart(2, '0')}:00:00`,
+          fecha_hora_salida: `${filters.fecha}T10:00:00.000Z`,
+          fecha_hora_llegada_estimada: `${filters.fecha}T${String(10 + routeData.duracion_horas).padStart(2, '0')}:00:00.000Z`,
           estado: 'Programado',
           ruta: {
             codigo: routeData.codigo,
@@ -96,8 +96,8 @@ export function SearchResultsPage() {
         },
         {
           codigo: 3,
-          fecha_hora_salida: `${filters.fecha}T15:00:00`,
-          fecha_hora_llegada_estimada: `${filters.fecha}T${String(15 + routeData.duracion_horas).padStart(2, '0')}:00:00`,
+          fecha_hora_salida: `${filters.fecha}T15:00:00.000Z`,
+          fecha_hora_llegada_estimada: `${filters.fecha}T${String(15 + routeData.duracion_horas).padStart(2, '0')}:00:00.000Z`,
           estado: 'Programado',
           ruta: {
             codigo: routeData.codigo,
@@ -127,8 +127,12 @@ export function SearchResultsPage() {
         },
         {
           codigo: 4,
-          fecha_hora_salida: `${filters.fecha}T20:00:00`,
-          fecha_hora_llegada_estimada: `${new Date(new Date(filters.fecha).getTime() + 24*60*60*1000).toISOString().split('T')[0]}T${String(20 + routeData.duracion_horas - 24).padStart(2, '0')}:00:00`,
+          fecha_hora_salida: `${filters.fecha}T20:00:00.000Z`,
+          fecha_hora_llegada_estimada: (() => {
+            const llegadaHora = 20 + routeData.duracion_horas;
+            const fechaLlegada = llegadaHora >= 24 ? new Date(new Date(filters.fecha).getTime() + 24*60*60*1000).toISOString().split('T')[0] : filters.fecha;
+            return `${fechaLlegada}T${String(llegadaHora >= 24 ? llegadaHora - 24 : llegadaHora).padStart(2, '0')}:00:00.000Z`;
+          })(),
           estado: 'Programado',
           ruta: {
             codigo: routeData.codigo,
